@@ -58,7 +58,7 @@ and lands as its own commit.
 - [x] **5 — Power and MDE.** Achieved power and minimum detectable effects per outcome.
 - [x] **6 — CUPED.** Variance reduction using prior spend as the pre-period covariate.
 - [x] **7 — Heterogeneous effects.** Pre-registered subgroup analysis.
-- [ ] **8 — Uplift models.** Meta-learners evaluated by Qini and uplift@k.
+- [x] **8 — Uplift models.** Meta-learners evaluated by Qini and uplift@k.
 - [ ] **9 — Targeting policy.** Per-customer campaign assignment, evaluated out of sample.
 - [ ] **10 — Budget optimiser.** Incremental-profit allocation under a budget constraint.
 - [ ] **11 — Dashboard.** Streamlit application over the DuckDB warehouse.
@@ -210,6 +210,35 @@ carries the primary analysis and the other outcomes are flagged underpowered.
 
 See [`notebooks/07_heterogeneous_effects.ipynb`](notebooks/07_heterogeneous_effects.ipynb).
 
+### Uplift models confirm it, and the simplest model wins
+
+![Qini curves](reports/figures/08_qini_curves.png)
+
+| | Womens E-Mail | Mens E-Mail |
+|---|---|---|
+| Learners beating random | **5 of 5** | 1 of 5 |
+| Qini z-score range | +7.55 to +8.43 | −0.32 to +2.43 |
+| Best Qini | 0.064 | 0.019 |
+
+Feature 7 predicted this before any model was fitted: strong signal on Womens, almost
+none on Mens. Five different meta-learners agree on Womens; four of five find nothing
+on Mens, and the one that clears significance does so at an adjusted p of 0.037 after
+being picked as best of five — which is what noise looks like when you search for it.
+
+The **logistic T-learner** scores highest (Qini 0.0641), beating every gradient-boosted
+variant. The heterogeneity is driven by one binary attribute, and a linear model
+captures a step function exactly; boosting adds only variance. Profiling the top uplift
+deciles recovers *prior womens purchase* independently — the model rediscovered
+Feature 7's mechanism without being told.
+
+Two guards make the result trustworthy. Every prediction is **out-of-fold**: on data
+built with no heterogeneity at all, in-sample scoring yields Qini 0.578 against an
+honest 0.012, a 47x inflation from leakage alone. And every Qini is scored against a
+**null distribution of 500 random rankings**, because Qini is high-variance and a model
+that learned nothing still returns a non-zero score more often than not.
+
+See [`notebooks/08_uplift_models.ipynb`](notebooks/08_uplift_models.ipynb).
+
 ---
 
 ## Repository layout
@@ -230,6 +259,8 @@ experimentiq/
 │   │   ├── power.py        # MDE, power curves, required sample size
 │   │   ├── cuped.py        # variance reduction, ANCOVA, CUPAC
 │   │   └── heterogeneity.py  # pre-registered subgroups, interaction tests
+│   ├── models/
+│   │   └── uplift.py       # meta-learners, Qini vs a random-ranking null
 │   └── db/
 │       ├── warehouse.py    # build and query the store
 │       └── sql/            # view definitions, in dependency order
@@ -260,6 +291,7 @@ python -m src.analysis.ab_test
 python -m src.analysis.power
 python -m src.analysis.cuped
 python -m src.analysis.heterogeneity
+python -m src.models.uplift
 ```
 
 Query the warehouse:
