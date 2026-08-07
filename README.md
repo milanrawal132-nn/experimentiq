@@ -56,7 +56,7 @@ and lands as its own commit.
 - [x] **3 — Experiment diagnostics.** Sample ratio mismatch, covariate balance.
 - [x] **4 — A/B analysis.** Lifts, confidence intervals, significance with Holm correction.
 - [x] **5 — Power and MDE.** Achieved power and minimum detectable effects per outcome.
-- [ ] **6 — CUPED.** Variance reduction using prior spend as the pre-period covariate.
+- [x] **6 — CUPED.** Variance reduction using prior spend as the pre-period covariate.
 - [ ] **7 — Heterogeneous effects.** Pre-registered subgroup analysis.
 - [ ] **8 — Uplift models.** Meta-learners evaluated by Qini and uplift@k.
 - [ ] **9 — Targeting policy.** Per-customer campaign assignment, evaluated out of sample.
@@ -154,6 +154,33 @@ threshold on their point estimate but not on their interval.
 
 See [`notebooks/05_power_analysis.ipynb`](notebooks/05_power_analysis.ipynb).
 
+### CUPED cannot rescue it, and the reason is diagnosable
+
+![CUPED variance reduction](reports/figures/06_cuped_variance_reduction.png)
+
+CUPED removes exactly ρ² of the outcome variance — an identity, not a rule of thumb —
+so the technique cannot be argued into working. The best correlation available in this
+dataset is 0.159, giving a **2.6% variance reduction on visit** and **0.04% on spend**.
+Against Feature 5's requirement of 23x more customers, CUPED supplies 1.0004x.
+
+The implementation is verified against synthetic data with known ρ, where it recovers
+the theoretical reduction to three decimals — so the null result is a fact about the
+data rather than a bug. The cause is specific: `history` is coarsely-bucketed lifetime
+spend, not a pre-period measurement of the outcome. Real CUPED deployments use last
+period's value of the *same* metric, which typically correlates 0.5–0.9.
+
+**The actionable finding is about instrumentation, not analysis:** logging each
+customer's spend over a fixed pre-experiment window would plausibly correlate 0.4–0.6
+and cut variance 16–36%, at the cost of one table.
+
+Two things worth noting. CUPAC — replacing the single covariate with a cross-fitted
+model over all pre-treatment features — helps on visit (ρ 0.067 → 0.159) but *hurts*
+on spend (0.021 → 0.014): with no signal to find, out-of-fold predictions are mostly
+fitted noise. And CUPED changed no conclusion from Feature 4, which is exactly how a
+correct implementation should behave on data that offers it no purchase.
+
+See [`notebooks/06_cuped.ipynb`](notebooks/06_cuped.ipynb).
+
 ---
 
 ## Repository layout
@@ -171,7 +198,8 @@ experimentiq/
 │   ├── analysis/
 │   │   ├── diagnostics.py  # SRM, covariate balance, omnibus balance
 │   │   ├── ab_test.py      # effect estimation, CIs, Holm correction
-│   │   └── power.py        # MDE, power curves, required sample size
+│   │   ├── power.py        # MDE, power curves, required sample size
+│   │   └── cuped.py        # variance reduction, ANCOVA, CUPAC
 │   └── db/
 │       ├── warehouse.py    # build and query the store
 │       └── sql/            # view definitions, in dependency order
@@ -200,6 +228,7 @@ Run the randomisation diagnostics, then the treatment effect analysis:
 python -m src.analysis.diagnostics
 python -m src.analysis.ab_test
 python -m src.analysis.power
+python -m src.analysis.cuped
 ```
 
 Query the warehouse:
