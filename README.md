@@ -54,7 +54,7 @@ and lands as its own commit.
 - [x] **1 — Data layer.** Validated load to parquet with explicit data contracts.
 - [x] **2 — DuckDB warehouse.** Analytical store and SQL metric views.
 - [x] **3 — Experiment diagnostics.** Sample ratio mismatch, covariate balance.
-- [ ] **4 — A/B analysis.** Lifts, confidence intervals, significance with Holm correction.
+- [x] **4 — A/B analysis.** Lifts, confidence intervals, significance with Holm correction.
 - [ ] **5 — Power and MDE.** Achieved power and minimum detectable effects per outcome.
 - [ ] **6 — CUPED.** Variance reduction using prior spend as the pre-period covariate.
 - [ ] **7 — Heterogeneous effects.** Pre-registered subgroup analysis.
@@ -105,6 +105,30 @@ the experiment the omnibus pseudo-R² rises ~950x, and the test suite asserts it
 
 See [`notebooks/03_randomisation_diagnostics.ipynb`](notebooks/03_randomisation_diagnostics.ipynb).
 
+### Both campaigns worked
+
+![Treatment effects](reports/figures/04_treatment_effects.png)
+
+| Arm | Outcome | Effect | 95% CI | Relative | Holm p |
+|---|---|---|---|---|---|
+| Mens | Visit | +7.66 pp | [+7.00, +8.32] | +72% | 3e-111 |
+| Mens | Conversion | +0.68 pp | [+0.50, +0.86] | +119% | 6e-13 |
+| Mens | Spend | +$0.77 | [+0.49, +1.05] | +118% | 3e-07 |
+| Womens | Visit | +4.52 pp | [+3.89, +5.16] | +43% | 2e-43 |
+| Womens | Conversion | +0.31 pp | [+0.15, +0.47] | +54% | 3e-04 |
+| Womens | Spend | +$0.42 | [+0.17, +0.68] | +65% | 1e-03 |
+
+Every effect survives Holm correction across the six tests. Mens E-Mail is roughly
+twice as effective as Womens E-Mail on visits and conversion.
+
+Spend is 99.1% zeros with a standard deviation ~14x its mean, so Welch's interval was
+checked against a 10,000-sample bootstrap rather than trusted: the two agree to within
+a fraction of a cent. The *relative* effect on spend is far less certain than the
+absolute one — Mens E-Mail's +118% carries an interval of [+64%, +196%], because a
+ratio of two random means inherits the uncertainty of its denominator.
+
+See [`notebooks/04_treatment_effects.ipynb`](notebooks/04_treatment_effects.ipynb).
+
 ---
 
 ## Repository layout
@@ -120,7 +144,8 @@ experimentiq/
 │   ├── config.py       # paths, experiment design, business assumptions
 │   ├── data/load.py    # load, validate, derive, persist
 │   ├── analysis/
-│   │   └── diagnostics.py  # SRM, covariate balance, omnibus balance
+│   │   ├── diagnostics.py  # SRM, covariate balance, omnibus balance
+│   │   └── ab_test.py      # effect estimation, CIs, Holm correction
 │   └── db/
 │       ├── warehouse.py    # build and query the store
 │       └── sql/            # view definitions, in dependency order
@@ -143,10 +168,11 @@ python -m src.data.load
 python -m src.db.warehouse
 ```
 
-Run the randomisation diagnostics:
+Run the randomisation diagnostics, then the treatment effect analysis:
 
 ```bash
 python -m src.analysis.diagnostics
+python -m src.analysis.ab_test
 ```
 
 Query the warehouse:
