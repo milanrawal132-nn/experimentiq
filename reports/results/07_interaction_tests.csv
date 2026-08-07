@@ -1,0 +1,43 @@
+outcome,treatment_arm,subgroup,preregistered,rationale,f_statistic,df_num,df_denom,p_value,n,levels,p_value_adjusted,significant
+visit,Mens E-Mail,mens,True,Prior mens purchasers should respond more to the Mens campaign,2.6444700347959493,1,42609.0,0.10391819942972087,42613,2,0.22170345165938407,False
+visit,Mens E-Mail,womens,True,Prior womens purchasers should respond more to the Womens campaign,3.9209923567367455,1,42609.0,0.04769314594783771,42613,2,0.15897715315945904,False
+visit,Mens E-Mail,recency_bucket,True,"Recent purchasers are more engaged, so likely more responsive",1.159331072542194,3,42605.0,0.32364078392089796,42613,4,0.53940130653483,False
+visit,Mens E-Mail,newbie,True,New and established customers may respond differently,0.1400676973384119,1,42609.0,0.7082155836102288,42613,2,0.885269479512786,False
+visit,Mens E-Mail,channel,True,Prior purchase channel may moderate responsiveness to email,0.2243856521031694,2,42607.0,0.7990078804238671,42613,3,0.8877865338042967,False
+visit,Mens E-Mail,history_segment,False,Spend band may moderate response,1.5871005017750939,6,42599.0,0.14627966250181998,42613,7,,False
+visit,Mens E-Mail,zip_code,False,Location may moderate response,0.3274508739197443,2,42607.0,0.7207605122886627,42613,3,,False
+conversion,Mens E-Mail,mens,True,Prior mens purchasers should respond more to the Mens campaign,1.1582960012080024,1,42609.0,0.2818253089123594,42613,2,,False
+conversion,Mens E-Mail,womens,True,Prior womens purchasers should respond more to the Womens campaign,0.6123838608688446,1,42609.0,0.43389600258291233,42613,2,,False
+conversion,Mens E-Mail,recency_bucket,True,"Recent purchasers are more engaged, so likely more responsive",0.46945647306136634,3,42605.0,0.7035756510510403,42613,4,,False
+conversion,Mens E-Mail,newbie,True,New and established customers may respond differently,0.4164217089303782,1,42609.0,0.5187314384589283,42613,2,,False
+conversion,Mens E-Mail,channel,True,Prior purchase channel may moderate responsiveness to email,1.1606467244424146,2,42607.0,0.31329341209804606,42613,3,,False
+conversion,Mens E-Mail,history_segment,False,Spend band may moderate response,1.272248780615972,6,42599.0,0.2662286569214113,42613,7,,False
+conversion,Mens E-Mail,zip_code,False,Location may moderate response,0.2858329641320742,2,42607.0,0.751389555033776,42613,3,,False
+spend,Mens E-Mail,mens,True,Prior mens purchasers should respond more to the Mens campaign,0.9876695245623216,1,42609.0,0.3203182744618114,42613,2,,False
+spend,Mens E-Mail,womens,True,Prior womens purchasers should respond more to the Womens campaign,0.2918553534843928,1,42609.0,0.5890368456519243,42613,2,,False
+spend,Mens E-Mail,recency_bucket,True,"Recent purchasers are more engaged, so likely more responsive",0.7641986194005054,3,42605.0,0.5139475040498005,42613,4,,False
+spend,Mens E-Mail,newbie,True,New and established customers may respond differently,1.7275626894656595,1,42609.0,0.18872953924016497,42613,2,,False
+spend,Mens E-Mail,channel,True,Prior purchase channel may moderate responsiveness to email,1.1079200159758376,2,42607.0,0.33025466584271634,42613,3,,False
+spend,Mens E-Mail,history_segment,False,Spend band may moderate response,0.875193738358378,6,42599.0,0.5120362926260772,42613,7,,False
+spend,Mens E-Mail,zip_code,False,Location may moderate response,0.023255562620335082,2,42607.0,0.9770127763245133,42613,3,,False
+visit,Womens E-Mail,mens,True,Prior mens purchasers should respond more to the Mens campaign,64.41776644162186,1,42689.0,1.0319705896486106e-15,42693,2,5.159852948243053e-15,True
+visit,Womens E-Mail,womens,True,Prior womens purchasers should respond more to the Womens campaign,94.20447467270772,1,42689.0,3.000426484412037e-22,42693,2,3.000426484412037e-21,True
+visit,Womens E-Mail,recency_bucket,True,"Recent purchasers are more engaged, so likely more responsive",0.7904195843512906,3,42685.0,0.49901436914095376,42693,4,0.7128776702013626,False
+visit,Womens E-Mail,newbie,True,New and established customers may respond differently,2.5421419844793194,1,42689.0,0.11085172582969204,42693,2,0.22170345165938407,False
+visit,Womens E-Mail,channel,True,Prior purchase channel may moderate responsiveness to email,0.02995069764619908,2,42687.0,0.9704934003713851,42693,3,0.9704934003713851,False
+visit,Womens E-Mail,history_segment,False,Spend band may moderate response,0.851045899932756,6,42679.0,0.5302650489256697,42693,7,,False
+visit,Womens E-Mail,zip_code,False,Location may moderate response,1.8149171344479322,2,42687.0,0.16286396873417294,42693,3,,False
+conversion,Womens E-Mail,mens,True,Prior mens purchasers should respond more to the Mens campaign,4.802710849460804,1,42689.0,0.028420376512159718,42693,2,,False
+conversion,Womens E-Mail,womens,True,Prior womens purchasers should respond more to the Womens campaign,7.699757302825383,1,42689.0,0.005525225991171574,42693,2,,False
+conversion,Womens E-Mail,recency_bucket,True,"Recent purchasers are more engaged, so likely more responsive",0.20558522446633534,3,42685.0,0.892585422065132,42693,4,,False
+conversion,Womens E-Mail,newbie,True,New and established customers may respond differently,6.953487778371463,1,42689.0,0.008368627243451297,42693,2,,False
+conversion,Womens E-Mail,channel,True,Prior purchase channel may moderate responsiveness to email,1.6931522568337343,2,42687.0,0.18395113954356418,42693,3,,False
+conversion,Womens E-Mail,history_segment,False,Spend band may moderate response,2.2548435901229245,6,42679.0,0.035382738096299486,42693,7,,False
+conversion,Womens E-Mail,zip_code,False,Location may moderate response,0.1855735097488541,2,42687.0,0.8306284441988396,42693,3,,False
+spend,Womens E-Mail,mens,True,Prior mens purchasers should respond more to the Mens campaign,2.138935241528619,1,42689.0,0.14360889198583615,42693,2,,False
+spend,Womens E-Mail,womens,True,Prior womens purchasers should respond more to the Womens campaign,1.0092165889966322,1,42689.0,0.315096287391392,42693,2,,False
+spend,Womens E-Mail,recency_bucket,True,"Recent purchasers are more engaged, so likely more responsive",0.3336225407624047,3,42685.0,0.8010420202043294,42693,4,,False
+spend,Womens E-Mail,newbie,True,New and established customers may respond differently,5.620882466811354,1,42689.0,0.017752124557764263,42693,2,,False
+spend,Womens E-Mail,channel,True,Prior purchase channel may moderate responsiveness to email,1.7917933648065407,2,42687.0,0.16667355197779582,42693,3,,False
+spend,Womens E-Mail,history_segment,False,Spend band may moderate response,2.1808913661820863,6,42679.0,0.04172192840050922,42693,7,,False
+spend,Womens E-Mail,zip_code,False,Location may moderate response,1.5377753929287152,2,42687.0,0.21487044839222325,42693,3,,False

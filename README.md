@@ -57,7 +57,7 @@ and lands as its own commit.
 - [x] **4 — A/B analysis.** Lifts, confidence intervals, significance with Holm correction.
 - [x] **5 — Power and MDE.** Achieved power and minimum detectable effects per outcome.
 - [x] **6 — CUPED.** Variance reduction using prior spend as the pre-period covariate.
-- [ ] **7 — Heterogeneous effects.** Pre-registered subgroup analysis.
+- [x] **7 — Heterogeneous effects.** Pre-registered subgroup analysis.
 - [ ] **8 — Uplift models.** Meta-learners evaluated by Qini and uplift@k.
 - [ ] **9 — Targeting policy.** Per-customer campaign assignment, evaluated out of sample.
 - [ ] **10 — Budget optimiser.** Incremental-profit allocation under a budget constraint.
@@ -181,6 +181,35 @@ correct implementation should behave on data that offers it no purchase.
 
 See [`notebooks/06_cuped.ipynb`](notebooks/06_cuped.ipynb).
 
+### One campaign is targetable, the other is not
+
+![Heterogeneous effects](reports/figures/07_heterogeneous_effects.png)
+
+| Question | Answer |
+|---|---|
+| Does the Mens campaign vary by customer? | No — 7.1 to 8.2 pp in every subgroup |
+| Does the Womens campaign vary? | Strongly — 1.1 to 7.3 pp by purchase history |
+| Is anyone actively harmed? | Not detectably at subgroup resolution |
+
+The **Womens** campaign lifts visits by 7.31 pp among customers who previously bought
+womens merchandise and 1.11 pp among those who did not — a 6.6x gap with
+non-overlapping intervals (interaction F = 94, p < 1e-10). The **Mens** campaign shows
+no significant interaction with any pre-registered subgroup: it works about equally
+well on everyone.
+
+That asymmetry bounds what personalisation can achieve. There is little for a targeting
+model to exploit on the Mens campaign; the opportunity is in deciding who receives the
+*Womens* campaign and in choosing between the two.
+
+Subgroups were pre-registered in `config.py` with a rationale each, before any effect
+was estimated. Heterogeneity is tested by **interaction**, not by comparing per-subgroup
+p-values — two estimates can straddle a significance threshold while being
+indistinguishable from each other, and the test suite asserts both directions of that
+error. Interactions cost roughly 4x the sample of a main effect, which is why `visit`
+carries the primary analysis and the other outcomes are flagged underpowered.
+
+See [`notebooks/07_heterogeneous_effects.ipynb`](notebooks/07_heterogeneous_effects.ipynb).
+
 ---
 
 ## Repository layout
@@ -199,7 +228,8 @@ experimentiq/
 │   │   ├── diagnostics.py  # SRM, covariate balance, omnibus balance
 │   │   ├── ab_test.py      # effect estimation, CIs, Holm correction
 │   │   ├── power.py        # MDE, power curves, required sample size
-│   │   └── cuped.py        # variance reduction, ANCOVA, CUPAC
+│   │   ├── cuped.py        # variance reduction, ANCOVA, CUPAC
+│   │   └── heterogeneity.py  # pre-registered subgroups, interaction tests
 │   └── db/
 │       ├── warehouse.py    # build and query the store
 │       └── sql/            # view definitions, in dependency order
@@ -229,6 +259,7 @@ python -m src.analysis.diagnostics
 python -m src.analysis.ab_test
 python -m src.analysis.power
 python -m src.analysis.cuped
+python -m src.analysis.heterogeneity
 ```
 
 Query the warehouse:

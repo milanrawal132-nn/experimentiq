@@ -96,6 +96,34 @@ SRM_ALPHA = 0.001
 # and observational-study literature.
 SMD_THRESHOLD = 0.10
 
+# --------------------------------------------------------------------------
+# Subgroup analysis
+# --------------------------------------------------------------------------
+# Fixed before any subgroup effect was estimated. Searching every way of
+# splitting the data and reporting whichever split looks strongest is how
+# subgroup analysis earns its bad reputation; committing to a short list with
+# a stated rationale, in version control, is the defence. Anything not named
+# here is exploratory and is labelled as such in the results.
+PREREGISTERED_SUBGROUPS = {
+    "mens": "Prior mens purchasers should respond more to the Mens campaign",
+    "womens": "Prior womens purchasers should respond more to the Womens campaign",
+    "recency_bucket": "Recent purchasers are more engaged, so likely more responsive",
+    "newbie": "New and established customers may respond differently",
+    "channel": "Prior purchase channel may moderate responsiveness to email",
+}
+
+EXPLORATORY_SUBGROUPS = {
+    "history_segment": "Spend band may moderate response",
+    "zip_code": "Location may moderate response",
+}
+
+# Splitting the sample costs power, and detecting an interaction of a given
+# size needs roughly four times the customers that detecting a main effect of
+# that size needs. Feature 5 showed visit is the only outcome with power to
+# spare, so it carries the primary heterogeneity analysis; conversion and
+# spend are reported but treated as underpowered.
+HETEROGENEITY_PRIMARY_OUTCOME = "visit"
+
 # Six tests are run in total (3 outcomes x 2 comparisons), so p-values are
 # corrected for multiplicity before anything is called significant.
 MULTIPLE_TESTING_METHOD = "holm"
