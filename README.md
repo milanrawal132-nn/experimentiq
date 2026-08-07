@@ -51,7 +51,7 @@ Each feature is built as a notebook first, then promoted to a module under `src/
 and lands as its own commit.
 
 - [x] **0 — Project setup.** Curated dependencies, configuration, repository hygiene.
-- [ ] **1 — Data layer.** Validated load to parquet with explicit data contracts.
+- [x] **1 — Data layer.** Validated load to parquet with explicit data contracts.
 - [ ] **2 — DuckDB warehouse.** Analytical store and SQL metric views.
 - [ ] **3 — Experiment diagnostics.** Sample ratio mismatch, covariate balance.
 - [ ] **4 — A/B analysis.** Lifts, confidence intervals, significance with Holm correction.
@@ -66,6 +66,30 @@ and lands as its own commit.
 
 ---
 
+## Where things stand
+
+![Outcomes by treatment arm](reports/figures/01_outcomes_by_arm.png)
+
+Both email arms sit above control on all three outcomes. Nothing is claimed about
+significance yet — that is Feature 4, after the randomisation diagnostics in
+Feature 3.
+
+The outcomes form a strict funnel, verified to hold with zero exceptions:
+
+```
+visit = 1  ⊃  conversion = 1  ⟺  spend > 0
+```
+
+Which means `spend` is 99.1% zeros with a standard deviation roughly 14x its mean.
+That single fact drives several later design decisions: the bootstrap interval in
+Feature 4, the sample-size calculation in Feature 5, and the choice of `history` as
+the CUPED covariate in Feature 6.
+
+See [`notebooks/01_data_quality.ipynb`](notebooks/01_data_quality.ipynb) for the
+full exploration.
+
+---
+
 ## Repository layout
 
 ```
@@ -75,13 +99,36 @@ experimentiq/
 │   ├── processed/      # derived parquet (rebuilt, ignored)
 │   └── database/       # DuckDB file (rebuilt, ignored)
 ├── notebooks/          # exploration, one per feature
-├── src/                # production modules
-│   └── config.py       # paths, experiment design, business assumptions
+├── src/
+│   ├── config.py       # paths, experiment design, business assumptions
+│   └── data/load.py    # load, validate, derive, persist
+├── tests/              # data contracts, enforced
 ├── reports/
 │   ├── figures/        # generated charts
 │   └── results/        # generated result tables
+├── conftest.py
 └── requirements.txt
 ```
+
+---
+
+## Usage
+
+Rebuild the processed dataset from the raw CSV:
+
+```bash
+python -m src.data.load
+```
+
+Run the test suite:
+
+```bash
+pytest
+```
+
+The tests do two jobs. They assert the published data satisfies its contracts, and —
+more usefully — they corrupt copies of the data to assert that `validate` actually
+rejects each violation. A contract that cannot fail is not a contract.
 
 ---
 
