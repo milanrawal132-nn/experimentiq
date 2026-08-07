@@ -1,0 +1,30 @@
+# ExperimentIQ - direct dependencies only.
+# Transitive packages are resolved by pip; run `pip install -r requirements.txt`
+# into a fresh Python 3.11 virtual environment.
+
+# --- Core data handling ---
+pandas==3.0.5
+numpy==2.4.6
+pyarrow==24.0.0          # parquet engine; version capped by streamlit
+
+# --- Statistics and inference ---
+scipy==1.17.1
+statsmodels==0.14.6      # power analysis, multiple-testing correction, OLS/ANCOVA
+
+# --- Machine learning and uplift modelling ---
+scikit-learn==1.9.0      # HistGradientBoosting is sufficient here; no XGBoost/LightGBM needed
+scikit-uplift==0.5.1     # uplift meta-learners, Qini curves, uplift@k
+joblib==1.5.3            # model persistence
+
+# --- Analytical store ---
+duckdb==1.5.5
+
+# --- Visualisation and application ---
+matplotlib==3.11.1
+plotly==6.9.0
+streamlit==1.61.1
+
+# --- Development ---
+jupyterlab==4.6.2
+pytest==9.1.1
+tqdm==4.70.0

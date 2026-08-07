@@ -216,3 +216,19 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# --- ExperimentIQ project-specific ---
+# macOS Finder metadata
+.DS_Store
+
+# Derived data. Everything below is rebuilt from data/raw by the pipeline,
+# so only the raw source CSV is version-controlled.
+data/processed/
+data/database/
+
+# Trained model artifacts
+models/
+
+# Note: reports/figures and reports/results are deliberately NOT ignored.
+# They are the presentation output of the project and are referenced by the
+# README, so they stay in version control.
