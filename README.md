@@ -55,7 +55,7 @@ and lands as its own commit.
 - [x] **2 — DuckDB warehouse.** Analytical store and SQL metric views.
 - [x] **3 — Experiment diagnostics.** Sample ratio mismatch, covariate balance.
 - [x] **4 — A/B analysis.** Lifts, confidence intervals, significance with Holm correction.
-- [ ] **5 — Power and MDE.** Achieved power and minimum detectable effects per outcome.
+- [x] **5 — Power and MDE.** Achieved power and minimum detectable effects per outcome.
 - [ ] **6 — CUPED.** Variance reduction using prior spend as the pre-period covariate.
 - [ ] **7 — Heterogeneous effects.** Pre-registered subgroup analysis.
 - [ ] **8 — Uplift models.** Meta-learners evaluated by Qini and uplift@k.
@@ -129,6 +129,31 @@ ratio of two random means inherits the uncertainty of its denominator.
 
 See [`notebooks/04_treatment_effects.ipynb`](notebooks/04_treatment_effects.ipynb).
 
+### But the experiment was sized for a cruder question than it looks
+
+![Power curves](reports/figures/05_power_curves.png)
+
+| Outcome | MDE (absolute) | MDE (relative) | Assessment |
+|---|---|---|---|
+| Visit | 0.85 pp | 8.0% | Well powered; effects 5–9x the threshold |
+| Conversion | 0.22 pp | 39.1% | Mens robust; Womens clears on the point estimate only |
+| Spend | $0.31 | 48.2% | Mens robust; Womens clears on the point estimate only |
+
+With 21,306 customers per arm this design could only detect a **39% relative change in
+conversion** and a **48% change in spend**. It was built to answer "does email work at
+all", and answers that emphatically. It could never have answered "is this variant 10%
+better" — that needs 286,000 customers per arm for conversion and 495,000 for spend,
+because halving the effect you want to detect quadruples the sample required.
+
+Robustness is judged by comparing the *lower bound* of each effect's confidence
+interval against the MDE, rather than by computing power at the observed effect —
+[that number is circular](reports/figures/05_observed_power_fallacy.png), being a
+monotone function of the p-value and so carrying no independent information. On that
+test four of six results are robust; Womens E-Mail on conversion and spend clear the
+threshold on their point estimate but not on their interval.
+
+See [`notebooks/05_power_analysis.ipynb`](notebooks/05_power_analysis.ipynb).
+
 ---
 
 ## Repository layout
@@ -145,7 +170,8 @@ experimentiq/
 │   ├── data/load.py    # load, validate, derive, persist
 │   ├── analysis/
 │   │   ├── diagnostics.py  # SRM, covariate balance, omnibus balance
-│   │   └── ab_test.py      # effect estimation, CIs, Holm correction
+│   │   ├── ab_test.py      # effect estimation, CIs, Holm correction
+│   │   └── power.py        # MDE, power curves, required sample size
 │   └── db/
 │       ├── warehouse.py    # build and query the store
 │       └── sql/            # view definitions, in dependency order
@@ -173,6 +199,7 @@ Run the randomisation diagnostics, then the treatment effect analysis:
 ```bash
 python -m src.analysis.diagnostics
 python -m src.analysis.ab_test
+python -m src.analysis.power
 ```
 
 Query the warehouse:
