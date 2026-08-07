@@ -52,7 +52,7 @@ and lands as its own commit.
 
 - [x] **0 — Project setup.** Curated dependencies, configuration, repository hygiene.
 - [x] **1 — Data layer.** Validated load to parquet with explicit data contracts.
-- [ ] **2 — DuckDB warehouse.** Analytical store and SQL metric views.
+- [x] **2 — DuckDB warehouse.** Analytical store and SQL metric views.
 - [ ] **3 — Experiment diagnostics.** Sample ratio mismatch, covariate balance.
 - [ ] **4 — A/B analysis.** Lifts, confidence intervals, significance with Holm correction.
 - [ ] **5 — Power and MDE.** Achieved power and minimum detectable effects per outcome.
@@ -101,8 +101,11 @@ experimentiq/
 ├── notebooks/          # exploration, one per feature
 ├── src/
 │   ├── config.py       # paths, experiment design, business assumptions
-│   └── data/load.py    # load, validate, derive, persist
-├── tests/              # data contracts, enforced
+│   ├── data/load.py    # load, validate, derive, persist
+│   └── db/
+│       ├── warehouse.py    # build and query the store
+│       └── sql/            # view definitions, in dependency order
+├── tests/              # data contracts and SQL-vs-pandas cross-checks
 ├── reports/
 │   ├── figures/        # generated charts
 │   └── results/        # generated result tables
@@ -114,11 +117,34 @@ experimentiq/
 
 ## Usage
 
-Rebuild the processed dataset from the raw CSV:
+Rebuild the processed dataset from the raw CSV, then the DuckDB warehouse:
 
 ```bash
 python -m src.data.load
+python -m src.db.warehouse
 ```
+
+Query the warehouse:
+
+```python
+from src.db.warehouse import query, table
+
+table("v_arm_metrics")
+query("SELECT * FROM v_segment_metrics WHERE dimension = 'Recency'")
+```
+
+| View | Answers |
+|---|---|
+| `v_arm_metrics` | What did each arm do? |
+| `v_arm_lift` | How much better than control, per outcome? |
+| `v_funnel` | Where in the funnel does the effect sit? |
+| `v_customer_dimensions` | Long-format customer attributes for slicing |
+| `v_segment_metrics` | Outcome rates and lift per (dimension, level, arm) |
+
+The views are descriptive by design. They report point estimates and no
+uncertainty — inference lives in Python, where the standard errors are, not in SQL,
+which makes it easy to compute a difference and awkward to compute the confidence
+interval around it.
 
 Run the test suite:
 

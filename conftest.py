@@ -26,3 +26,23 @@ def raw_df():
 def processed_df(raw_df):
     """The derived dataset, built once per test session."""
     return add_derived_columns(raw_df)
+
+
+@pytest.fixture(scope="session")
+def warehouse(processed_df, tmp_path_factory):
+    """A DuckDB warehouse built into a temporary location.
+
+    Redirecting `config.DUCKDB_PATH` keeps the suite from overwriting the
+    developer's real database, and guarantees each run starts from an empty
+    file rather than inheriting stale views from a previous build.
+    """
+    from src import config
+    from src.db import warehouse as wh
+
+    original = config.DUCKDB_PATH
+    config.DUCKDB_PATH = tmp_path_factory.mktemp("db") / "test.duckdb"
+    try:
+        wh.build(df=processed_df)
+        yield wh
+    finally:
+        config.DUCKDB_PATH = original
