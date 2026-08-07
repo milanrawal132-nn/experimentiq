@@ -53,7 +53,7 @@ and lands as its own commit.
 - [x] **0 — Project setup.** Curated dependencies, configuration, repository hygiene.
 - [x] **1 — Data layer.** Validated load to parquet with explicit data contracts.
 - [x] **2 — DuckDB warehouse.** Analytical store and SQL metric views.
-- [ ] **3 — Experiment diagnostics.** Sample ratio mismatch, covariate balance.
+- [x] **3 — Experiment diagnostics.** Sample ratio mismatch, covariate balance.
 - [ ] **4 — A/B analysis.** Lifts, confidence intervals, significance with Holm correction.
 - [ ] **5 — Power and MDE.** Achieved power and minimum detectable effects per outcome.
 - [ ] **6 — CUPED.** Variance reduction using prior spend as the pre-period covariate.
@@ -88,6 +88,23 @@ the CUPED covariate in Feature 6.
 See [`notebooks/01_data_quality.ipynb`](notebooks/01_data_quality.ipynb) for the
 full exploration.
 
+### The randomisation holds
+
+![Covariate balance](reports/figures/03_covariate_balance.png)
+
+| Check | Result | Interpretation |
+|---|---|---|
+| Sample ratio mismatch | p = 0.90 | Arm sizes match the intended equal split |
+| Covariate balance | max \|SMD\| = 0.016 | Every covariate far inside the 0.1 threshold |
+| Omnibus balance | pseudo-R² = 0.0002 | Covariates jointly explain ~0% of assignment |
+
+So differences between arms can be attributed to the emails rather than to
+pre-existing differences between the customers who received them. The diagnostics
+are shown to discriminate, not merely to pass: on a deliberately confounded copy of
+the experiment the omnibus pseudo-R² rises ~950x, and the test suite asserts it.
+
+See [`notebooks/03_randomisation_diagnostics.ipynb`](notebooks/03_randomisation_diagnostics.ipynb).
+
 ---
 
 ## Repository layout
@@ -102,6 +119,8 @@ experimentiq/
 ├── src/
 │   ├── config.py       # paths, experiment design, business assumptions
 │   ├── data/load.py    # load, validate, derive, persist
+│   ├── analysis/
+│   │   └── diagnostics.py  # SRM, covariate balance, omnibus balance
 │   └── db/
 │       ├── warehouse.py    # build and query the store
 │       └── sql/            # view definitions, in dependency order
@@ -122,6 +141,12 @@ Rebuild the processed dataset from the raw CSV, then the DuckDB warehouse:
 ```bash
 python -m src.data.load
 python -m src.db.warehouse
+```
+
+Run the randomisation diagnostics:
+
+```bash
+python -m src.analysis.diagnostics
 ```
 
 Query the warehouse:

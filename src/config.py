@@ -84,6 +84,18 @@ CUPED_COVARIATE = "history"
 ALPHA = 0.05
 POWER_TARGET = 0.80
 
+# Sample ratio mismatch is tested at a much stricter level than the outcome
+# analysis. An SRM is a serious defect that invalidates the whole experiment,
+# so the test is run to avoid crying wolf: at alpha = 0.05 one experiment in
+# twenty would be flagged spuriously. 0.001 is the level used in the industry
+# literature on SRM diagnosis.
+SRM_ALPHA = 0.001
+
+# Standardised mean difference above which a covariate is treated as
+# meaningfully imbalanced. 0.1 is the conventional threshold from the matching
+# and observational-study literature.
+SMD_THRESHOLD = 0.10
+
 # Six tests are run in total (3 outcomes x 2 comparisons), so p-values are
 # corrected for multiplicity before anything is called significant.
 MULTIPLE_TESTING_METHOD = "holm"
