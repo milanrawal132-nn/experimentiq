@@ -226,8 +226,9 @@ __marimo__/
 data/processed/
 data/database/
 
-# Trained model artifacts
-models/
+# Trained model artifacts. Anchored to the repository root on purpose: an
+# unanchored `models/` also matches `src/models/`, which is source code.
+/models/
 
 # Note: reports/figures and reports/results are deliberately NOT ignored.
 # They are the presentation output of the project and are referenced by the

@@ -59,7 +59,7 @@ and lands as its own commit.
 - [x] **6 — CUPED.** Variance reduction using prior spend as the pre-period covariate.
 - [x] **7 — Heterogeneous effects.** Pre-registered subgroup analysis.
 - [x] **8 — Uplift models.** Meta-learners evaluated by Qini and uplift@k.
-- [ ] **9 — Targeting policy.** Per-customer campaign assignment, evaluated out of sample.
+- [x] **9 — Targeting policy.** Per-customer campaign assignment, evaluated out of sample.
 - [ ] **10 — Budget optimiser.** Incremental-profit allocation under a budget constraint.
 - [ ] **11 — Dashboard.** Streamlit application over the DuckDB warehouse.
 - [ ] **12 — Final report.** Executive summary and results write-up.
@@ -239,6 +239,48 @@ that learned nothing still returns a non-zero score more often than not.
 
 See [`notebooks/08_uplift_models.ipynb`](notebooks/08_uplift_models.ipynb).
 
+### The targeting policy is right about *who*, and it does not matter
+
+![Targeting policy](reports/figures/09_targeting_policy.png)
+
+| Question | Answer |
+|---|---|
+| Best policy by point estimate | Best campaign per customer — 0.1845 |
+| Does it beat "send Mens to everyone"? | **No** — +0.18 pp, CI [−0.23, +0.59], p = 0.40 |
+| Does it pick the right arm? | **Yes** — correct in both assignment groups |
+| Was that gain ever detectable? | No — roughly 5x below Feature 5's MDE |
+
+Policies are valued by **inverse propensity weighting**. A customer received one arm;
+their outcome under the others was never observed, so a policy that would have assigned
+them differently cannot be evaluated by filtering. Randomisation supplies known
+assignment probabilities, and reweighting the customers whose actual arm matches the
+policy reconstructs the full population without bias. The estimator is verified against
+an exact identity — "send arm A to everyone" reproduces arm A's observed mean to 1e-16.
+
+The learned policy sends Mens to 70% of customers and Womens to 30%, and its decisions
+audit as **correct**: among the 44,914 it assigns Mens the measured Mens effect is
++7.91 pp against Womens' +3.24 pp; among the 19,086 it assigns Womens the ordering
+genuinely flips, +7.53 pp against +7.03 pp. That audit uses observed outcomes only, no
+model.
+
+But the second gap is half a percentage point on 30% of the file, so the population
+gain is ~0.15 pp — about **5x below the smallest effect this experiment was built to
+detect**. The honest conclusion is not "personalisation does not work" but *this
+experiment cannot resolve whether it does*; separating those two takes a power argument,
+because they support opposite decisions. Comparisons are run **paired** — the two
+policies agree on 44,914 customers and those contribute exactly zero noise — which
+makes the test 1.9x more precise and confirms the null is real rather than an artifact
+of a loose standard error.
+
+**What a business should do:** send the Mens campaign to everyone. It captures 18.3 of
+the 18.5 points the learned policy achieves, with no model, no scoring pipeline and no
+monitoring. Two caveats: the outcome here is *visits*, not profit, and the `none` action
+is never selected because every customer has positive predicted visit uplift. Feature 10
+redoes both on incremental profit, where a $0.10 send cost sets a positive break-even
+threshold and withholding becomes a live option.
+
+See [`notebooks/09_targeting_policy.ipynb`](notebooks/09_targeting_policy.ipynb).
+
 ---
 
 ## Repository layout
@@ -260,7 +302,8 @@ experimentiq/
 │   │   ├── cuped.py        # variance reduction, ANCOVA, CUPAC
 │   │   └── heterogeneity.py  # pre-registered subgroups, interaction tests
 │   ├── models/
-│   │   └── uplift.py       # meta-learners, Qini vs a random-ranking null
+│   │   ├── uplift.py       # meta-learners, Qini vs a random-ranking null
+│   │   └── policy.py       # assignment policies, off-policy value via IPW
 │   └── db/
 │       ├── warehouse.py    # build and query the store
 │       └── sql/            # view definitions, in dependency order
@@ -292,6 +335,7 @@ python -m src.analysis.power
 python -m src.analysis.cuped
 python -m src.analysis.heterogeneity
 python -m src.models.uplift
+python -m src.models.policy
 ```
 
 Query the warehouse:
