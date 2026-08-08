@@ -60,7 +60,7 @@ and lands as its own commit.
 - [x] **7 — Heterogeneous effects.** Pre-registered subgroup analysis.
 - [x] **8 — Uplift models.** Meta-learners evaluated by Qini and uplift@k.
 - [x] **9 — Targeting policy.** Per-customer campaign assignment, evaluated out of sample.
-- [ ] **10 — Budget optimiser.** Incremental-profit allocation under a budget constraint.
+- [x] **10 — Budget optimiser.** Incremental-profit allocation under a budget constraint.
 - [ ] **11 — Dashboard.** Streamlit application over the DuckDB warehouse.
 - [ ] **12 — Final report.** Executive summary and results write-up.
 
@@ -281,6 +281,53 @@ threshold and withholding becomes a live option.
 
 See [`notebooks/09_targeting_policy.ipynb`](notebooks/09_targeting_policy.ipynb).
 
+### In money, one campaign is a decision and the other is a coin flip
+
+![Budget optimiser](reports/figures/10_budget_optimiser.png)
+
+| | Mens E-Mail | Womens E-Mail |
+|---|---|---|
+| Profit per email, net of send cost | **+$0.131** | +$0.027 |
+| 95% interval | [+$0.046, +$0.216] | [−$0.049, +$0.104] |
+| Break-even margin | 13.0% | 23.6% |
+| ...on pessimistic assumptions | **20.6%** | **59.2%** |
+
+An email costs $0.10 and returns 30% of the incremental spend it causes, so it has to
+generate **$0.33 of extra spend just to break even** — a much higher bar than "the
+campaign has a positive effect", which is all Feature 4 established. Both campaigns
+cleared significance on spend. Only Mens clears break-even with an interval that excludes
+zero. Womens lifts spend $0.42 ± $0.26 against a $0.33 threshold, which is not a
+decision.
+
+The last row is what a planning conversation actually needs: **Mens stays profitable down
+to a 20.6% gross margin even if its true effect sits at the pessimistic end of its
+interval.** Womens would need 59.2% under the same pessimism. The break-even margin
+depends only on the spend effect and the send cost, never on the margin you assume, which
+is why it is the number worth quoting.
+
+Profit is handled as a *column* — `margin × spend − cost × emailed` — not a new
+estimator. Control customers carry no cost, so the arm-minus-control difference in that
+column is incremental profit with the send cost already netted out, and Feature 4's Welch
+intervals and Feature 9's IPW apply unchanged. Allocation is greedy, which for equal send
+costs is **exactly optimal rather than a heuristic**; the test suite brute-forces it
+against every subset instead of leaving that as a claim.
+
+**The methodological result is the transferable one.** Two uplift models, same data, same
+code. The visit model passed Feature 8's null test; ranking the budget by it is
+indistinguishable from using no model (+$675, p = 0.65) — harmless. The spend model
+failed that null test; ranking by it **loses $3,140** against simply sending Mens to
+everyone (p = 0.034), because it reassigns 13,850 customers away from the campaign
+Feature 4 had already shown was twice as effective. *The cost of deploying an unvalidated
+model is not zero.*
+
+**What a business should do:** send Mens to as many customers as the budget covers. Every
+budget dollar returns ~$1.74 of incremental profit, no curve turns over before a full
+send, and no ranking tested improves on spending it uniformly. Withholding email from the
+9,119 customers below break-even is worth the $912 of certain cost saving and nothing
+demonstrable beyond it (+$476, p = 0.54).
+
+See [`notebooks/10_budget_optimiser.ipynb`](notebooks/10_budget_optimiser.ipynb).
+
 ---
 
 ## Repository layout
@@ -303,7 +350,8 @@ experimentiq/
 │   │   └── heterogeneity.py  # pre-registered subgroups, interaction tests
 │   ├── models/
 │   │   ├── uplift.py       # meta-learners, Qini vs a random-ranking null
-│   │   └── policy.py       # assignment policies, off-policy value via IPW
+│   │   ├── policy.py       # assignment policies, off-policy value via IPW
+│   │   └── budget.py       # profit model, break-even, greedy allocation
 │   └── db/
 │       ├── warehouse.py    # build and query the store
 │       └── sql/            # view definitions, in dependency order
@@ -336,6 +384,7 @@ python -m src.analysis.cuped
 python -m src.analysis.heterogeneity
 python -m src.models.uplift
 python -m src.models.policy
+python -m src.models.budget
 ```
 
 Query the warehouse:
@@ -401,7 +450,11 @@ are stated in `src/config.py` and exposed as adjustable inputs in the dashboard:
 | Cost per email | $0.10 | Sets the break-even uplift for sending |
 
 Conclusions about profit are conditional on these; conclusions about causal effect
-are not.
+are not. Feature 10 reports how much the conditioning actually costs: the Mens
+campaign's verdict is unchanged anywhere above a 20.6% margin, so the assumption is not
+load-bearing there. The Womens campaign's verdict flips inside the plausible range, so
+for that arm the assumption *is* the answer — which is why the break-even margin is
+reported alongside every profit figure rather than a single point estimate.
 
 ---
 
