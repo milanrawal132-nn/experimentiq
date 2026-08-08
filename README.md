@@ -10,6 +10,9 @@ It answers four questions in order:
 3. **Who should receive which campaign?** — uplift modelling and a targeting policy.
 4. **How should the budget be spent?** — profit-based allocation under a budget constraint.
 
+**If you only read one thing: [`reports/FINAL_REPORT.md`](reports/FINAL_REPORT.md)** —
+the decision write-up, generated from the result tables and checked against them.
+
 ---
 
 ## The experiment
@@ -62,7 +65,7 @@ and lands as its own commit.
 - [x] **9 — Targeting policy.** Per-customer campaign assignment, evaluated out of sample.
 - [x] **10 — Budget optimiser.** Incremental-profit allocation under a budget constraint.
 - [x] **11 — Dashboard.** Streamlit application over the DuckDB warehouse.
-- [ ] **12 — Final report.** Executive summary and results write-up.
+- [x] **12 — Final report.** Executive summary and results write-up.
 
 ---
 
@@ -365,6 +368,33 @@ The Streamlit application is tested through `AppTest`, headless: every page is o
 every test run, so a page that reads a column some module no longer writes fails in CI
 rather than in front of an audience.
 
+### The report is generated, and it verifies its own inputs
+
+**→ [`reports/FINAL_REPORT.md`](reports/FINAL_REPORT.md)** — the decision write-up, ~2,700
+words, built by `python -m src.report.build`.
+
+The prose is authored; **not one number in it is typed by hand.** Every figure is read
+from a result table at build time, so the report cannot quietly go stale when an analysis
+is re-run — it regenerates saying something different, which is the correct behaviour.
+
+More usefully, it checks its own inputs before quoting them. Eleven modules produced those
+tables and each runs independently, so nothing forces them to describe the same data or
+the same configuration — and a report built from tables that disagree reads exactly like
+one built from tables that agree. Twelve **cross-table invariants** run at build time and
+their results are printed into the document. Two cannot agree by accident:
+
+| Invariant | Why it is hard to fake |
+|---|---|
+| Policy values recover the observed arm means | Feature 9's inverse-propensity estimate of "send Mens to everyone" against Feature 4's plain average of that arm — the same quantity two entirely different ways. Agreement: 8e-17 |
+| Profit follows from the spend effect | Feature 10's profit per email against Feature 4's spend effect run through the margin. Agreement: 1e-16 |
+
+**A failing check aborts the build.** A report that quietly documents its own
+inconsistency would be worse than no report. And because a check that passes on good data
+proves nothing on its own, the test suite breaks every one of the twelve deliberately and
+asserts it fails — the same standard the data contracts in Feature 1 are held to.
+
+See [`notebooks/12_final_report.ipynb`](notebooks/12_final_report.ipynb).
+
 ---
 
 ## Repository layout
@@ -393,11 +423,15 @@ experimentiq/
 │   │   └── budget.py       # profit model, break-even, greedy allocation
 │   ├── dashboard/
 │   │   └── loaders.py      # result access and the live profit model
+│   ├── report/
+│   │   ├── build.py        # generates FINAL_REPORT.md from the result tables
+│   │   └── checks.py       # cross-table invariants, run before anything is quoted
 │   └── db/
 │       ├── warehouse.py    # build and query the store
 │       └── sql/            # view definitions, in dependency order
 ├── tests/              # data contracts and SQL-vs-pandas cross-checks
 ├── reports/
+│   ├── FINAL_REPORT.md # generated decision write-up
 │   ├── figures/        # generated charts
 │   └── results/        # generated result tables
 ├── conftest.py
@@ -426,6 +460,12 @@ python -m src.analysis.heterogeneity
 python -m src.models.uplift
 python -m src.models.policy
 python -m src.models.budget
+```
+
+Generate the written report, which refuses to build if the result tables disagree:
+
+```bash
+python -m src.report.build
 ```
 
 Launch the dashboard over everything the pipeline produced:
@@ -466,11 +506,12 @@ The tests do two jobs. They assert the published data satisfies its contracts, a
 more usefully — they corrupt copies of the data to assert that `validate` actually
 rejects each violation. A contract that cannot fail is not a contract.
 
-The same principle runs through the rest of the suite: the uplift models are checked
+The same principle runs through the rest of the 434 tests: the uplift models are checked
 against a synthetic dataset with a known responder segment *and* against one with no
 heterogeneity at all, the greedy allocator is brute-forced against every subset rather
-than assumed optimal, and the dashboard's live profit arithmetic is pinned against the
-pipeline it claims to reproduce.
+than assumed optimal, the dashboard's live profit arithmetic is pinned against the
+pipeline it claims to reproduce, and each of the report's twelve consistency checks is
+deliberately broken to prove it can fail.
 
 ---
 
