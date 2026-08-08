@@ -61,7 +61,7 @@ and lands as its own commit.
 - [x] **8 — Uplift models.** Meta-learners evaluated by Qini and uplift@k.
 - [x] **9 — Targeting policy.** Per-customer campaign assignment, evaluated out of sample.
 - [x] **10 — Budget optimiser.** Incremental-profit allocation under a budget constraint.
-- [ ] **11 — Dashboard.** Streamlit application over the DuckDB warehouse.
+- [x] **11 — Dashboard.** Streamlit application over the DuckDB warehouse.
 - [ ] **12 — Final report.** Executive summary and results write-up.
 
 ---
@@ -328,12 +328,51 @@ demonstrable beyond it (+$476, p = 0.54).
 
 See [`notebooks/10_budget_optimiser.ipynb`](notebooks/10_budget_optimiser.ipynb).
 
+### The dashboard shows the analysis; it does not re-run it
+
+```bash
+streamlit run app/dashboard.py
+```
+
+Seven sections — overview, randomisation checks, treatment effects, who responds,
+targeting policy, profit and budget, and a warehouse explorer — reading the generated
+result tables and the DuckDB views.
+
+**It reads artifacts rather than recomputing them, deliberately.** Re-fitting uplift
+models on every interaction would take tens of seconds, but the real problem is
+correctness: an application that re-runs its own analysis can quietly show numbers that
+disagree with the committed results, and a reader has no way to tell which is right.
+Reading the generated CSVs makes what the dashboard shows and what this README reports
+the same artifact by construction.
+
+**The profit model is the one deliberate exception**, because margin and cost per email
+are assumptions rather than measurements — so they are sliders. That is safe to
+recompute live because it is not inference: profit is a linear transform of the spend
+effect, `margin × spend_effect − cost`, and within an arm the send cost is a constant
+shift that changes no variance. The test suite asserts the live numbers equal
+`budget.campaign_economics` recomputed from the raw data, so the fast path is provably
+the same number rather than an approximation of it. Moving the margin past ~55% flips
+the Womens campaign's verdict from *cannot be determined* to *pays for itself*, which is
+the finding from Feature 10 made interactive.
+
+Two smaller things the dashboard is careful about. The profit verdict has **three**
+states — pays for itself, loses money, cannot be determined — because collapsing the
+third into "not profitable" would report a wide interval as a negative finding. And
+every page **degrades to a rebuild instruction** rather than a traceback when its results
+have not been generated yet, which is the state of any fresh clone.
+
+The Streamlit application is tested through `AppTest`, headless: every page is opened on
+every test run, so a page that reads a column some module no longer writes fails in CI
+rather than in front of an audience.
+
 ---
 
 ## Repository layout
 
 ```
 experimentiq/
+├── app/
+│   └── dashboard.py    # Streamlit application; view layer only
 ├── data/
 │   ├── raw/            # source CSV (version-controlled)
 │   ├── processed/      # derived parquet (rebuilt, ignored)
@@ -352,6 +391,8 @@ experimentiq/
 │   │   ├── uplift.py       # meta-learners, Qini vs a random-ranking null
 │   │   ├── policy.py       # assignment policies, off-policy value via IPW
 │   │   └── budget.py       # profit model, break-even, greedy allocation
+│   ├── dashboard/
+│   │   └── loaders.py      # result access and the live profit model
 │   └── db/
 │       ├── warehouse.py    # build and query the store
 │       └── sql/            # view definitions, in dependency order
@@ -387,6 +428,12 @@ python -m src.models.policy
 python -m src.models.budget
 ```
 
+Launch the dashboard over everything the pipeline produced:
+
+```bash
+streamlit run app/dashboard.py
+```
+
 Query the warehouse:
 
 ```python
@@ -418,6 +465,12 @@ pytest
 The tests do two jobs. They assert the published data satisfies its contracts, and —
 more usefully — they corrupt copies of the data to assert that `validate` actually
 rejects each violation. A contract that cannot fail is not a contract.
+
+The same principle runs through the rest of the suite: the uplift models are checked
+against a synthetic dataset with a known responder segment *and* against one with no
+heterogeneity at all, the greedy allocator is brute-forced against every subset rather
+than assumed optimal, and the dashboard's live profit arithmetic is pinned against the
+pipeline it claims to reproduce.
 
 ---
 
